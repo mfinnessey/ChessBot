@@ -99,53 +99,64 @@ def checkmovevalid(move):
         return False;
 
 def checkmovelegal(move, chessboard, white):
-    # TODO check if a move is legal in a given position. Moves must have already been validated through checkmovevalid as there is no internal error-handling.
-    # Unfinished lmao.
+    # TODO check if a move is legal in a given position. 
+    # Requires moves to have been run through stripmove() beforehands.
+    # This is a computationally-intense function given its internal function calls, so running moves through checkmovevalid() beforehands is highly recommended.
+    
+    # This does result in calling findoriginatingsquare and findfinalsquare multiple times, but doing it differently would
+    # require greatly increasing the complexity of the function calls below, which is no fun for python.
+    # Besides, they're not that computationally-intense anyways.
    
-   # Holds the potential resulting position resulting from the move.
-   nextboard = executemove(move, chessboard)
+   # Holds the resulting position resulting from the move. Ignores all considerations of validity.
+    nextboard = executemove(move, chessboard)
  
+ 
+    # Here W stands for white pieces and Z stands for black pieces (conflict with bishops).
+    if(white):
+        move = "W" + move
+    else:
+        move = "Z" + move
     
-    # Evaluates if a given move of the specificed piece in the given position is legal. Separated out for readability and ease of evaluating check to assess legality of other moves. Does not handle check considerations.
+    # Evaluates if a given move of the specificed piece in the given position is legal.
+    # Each "piece function" evaluates whether moving the piece as specified is legal, not considering check.
+    # Evaluate check then evaluates the resulting position to see if the King is in check (which would make the move illegal).
     
-   if(move[0] == "K"):
-        if(kingmove(move, chessboard) and evaluatecheck(nextboard)):
+    if(move[1] == "K"):
+        if(kingmove(move, chessboard) and not evaluatecheck(nextboard)):
             return True
-        else:
-            return False
-   elif(move[0] == "Q"):
-        if(queenmove(move, chessboard) and evaluatecheck(nextboard)):
+    elif(move[1] == "Q"):
+        if(queenmove(move, chessboard) and not evaluatecheck(nextboard)):
             return True
-        else:
-            return False
-   elif(move[0] == "R"):
-        if(rookmove(move, chessboard) and evaluatecheck(nextboard)):
+    elif(move[1] == "R"):
+        if(rookmove(move, chessboard) and not evaluatecheck(nextboard)):
             return True
-        else:
-            return False
-   elif(move[0] == "B"):
-        if(bishopmove(move, chessboard) and evaluatecheck(nextboard)):
+    elif(move[1] == "B"):
+        if(bishopmove(move, chessboard) and not evaluatecheck(nextboard)):
             return True
-        else:
-            return False
-   elif(move[0] == "N"):
-        if(knightmove(move, chessboard) and evaluatecheck(nextboard)):
+    elif(move[1] == "N"):
+        if(knightmove(move, chessboard) and not evaluatecheck(nextboard)):
             return True
-        else:
-            return False
-   elif(move[0] in ["a", "b", "c", "d", "e", "f", "g", "h"]):
-        if(pawnmove(move, chessboard) and evaluatecheck(nextboard)):
+    elif(move[1] in ["a", "b", "c", "d", "e", "f", "g", "h"]): # Pawn moves
+        if(pawnmove(move, chessboard) and not evaluatecheck(nextboard)):
             return True
-        else:
-            return False
-   else:
+    else:
         return False
 
-def findoriginatingsquare(move, chessboard, white):
+def findoriginatingsquare(move, chessboard):
     # TODO find the originating square of a given move that has been "stripped." 
-    # The originating square is returned as a two-digit integer where the first digit represents the row coordinate
-    # and the second digit represents the column coordinate.
-    # BORKED: Finish transition to algebraic return.
+    # The originating square is returned as a two-digit integer where the first digit represents the column coordinate
+    # and the second digit represents the row coordinate. This is stored as one digit above the actual index as 00
+    # would be simplified to 0.
+    
+    
+    # Unfinished. In process of conversion to integer return.
+    
+    originatingPiece = 'W' # The needed information about the originating piece (piece and color)
+    if(move[0] == 'Z'): # If the originating piece is black
+        originatingPiece = "B" + move[1]
+    else:
+        originatingPiece = "W" + move[1]
+    
     
     # Temporary index tracker for the originating column for pawn captures.
     tempindex = 0
@@ -154,9 +165,48 @@ def findoriginatingsquare(move, chessboard, white):
     possibleoriginatinglocations = []
     
     # Special handling of castling.
-    if(move == "0-0" or move == "0-0-0"):
-        return "castling"
-    return "error"
+    if(originatingPiece[1] == '0'):
+        return 99
+    if(originatingPiece[1] == 'K'): # Can skip originating square logic because max one king.
+        # Iterating through all the pieces on the board.
+        for i in range 8:
+            for j in range 8:
+                # If the king is found on the chessboard, then return the corresponding square.
+                if(originatingPiece == chessboard[i][j]):
+                    return ((10 * ++i) + ++j)
+    # Normal evaluation for major pieces which there could be multiple of.
+    elif(originatingPiece[1] in ['Q','R','B','N']):
+        # Iterating through all the pieces on the board.
+        for i in range 8:
+            for j in range 8:
+                # If the piece is found on the chessboard
+                if(originatingPiece[1] == (chessboard[i][j])[1] and (chessboard[i][j])[0] == originatingPiece[0]):
+                    # Add its square to the possible originating locations.
+                    possibleoriginatinglocations.append(((10 * ++i) + ++j))
+        # If there's only one possible originating location then return that.
+        if(len(possibleoriginatinglocations) = 1):
+            return possibleoriginatinglocations[0]
+        # Otherwise iterate through the possible originating locations with different logic for different move formatting / length.
+        else:
+            # Iterating through the possible originating locations for moves that are specified with a row OR column.
+            if(move.len == 5):
+                for i in range(len(possibleoriginatinglocations)):
+                    if(move[2] == (possibleoriginatinglocations[i] ) or move[3] == ): # FIXME I AM NOT CORRECT FINISH IMPLEMENTING INTEGER RETURN FROM HERE DOWN
+                        return possibleoriginatinglocations[i]
+            # Iterating through the possible originating locations for moves that are specified with a row AND column.
+            elif(move.len == 6):
+                if(move[1:2] == possibleoriginatinglocations[i]):
+                    return possibleoriginatinglocations[i]
+            else:
+                return "insufficient specification"
+    # Pawn moves
+    else:
+        # Simple advancement.
+        if(len(move) == 3):
+        # Capture 
+        else:
+            # White pawns advance one row while capturing, and the originating column must be indicated by definition.
+            return (originatingPiece[1] + str(int(move[2]--)))     
 
 def findfinalsquare(move):
     # TODO find the ending square of a given move that has already been stripped by stripmove().
@@ -273,11 +323,7 @@ def evaluatecheck(chessboard, white):
                        return True
                else:
                    return False
-
-
-
    
-       
 def executemove(move, chessboard):
     # TODO alter a given chessboard based on a provided move.
     
