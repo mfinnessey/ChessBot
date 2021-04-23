@@ -39,260 +39,64 @@ game = True
 # Tracks whether the entered move is impossible.
 impossiblemove = True
 
+# Used in individual evalution functions to track a move's originating and final squares.
+originatingsquare = ""
+finalsqure = ""
+
+
+
+def stripmove(move):
+    # TODO strip a move of any illegal characters. This includes capture or check indicators.
+    # Iterating through each character.
+    strippedMove = "" # Hold stripped move
+    for i in range(len(move)):
+        # If it's not a legal character.
+        if(move[i] in ['=','-','a','b','c','d','e','f','g','h','0','1','2','3','4','5','6','7','8', 'K','Q','R','B','N']):
+            # Reconstruct the string around (without) it.
+            strippedMove += move[i]
+    return strippedMove
+        
 def checkmovevalid(move):
     # TODO validate if a move is formatted correctly. Does NOT check if a move is possible.
-    # Moves must be provided in algeBRaic notation.
-    # Consider expanding for weird three queens type crap with needing to spec out both letter and number for originating square.
+    # Returns True if a move is valid and False otherwise.
+    # Moves must be stripped first.
     
-    
-    # Valid numbers and letters for locations.
+    # Valid numbers and letters for locations and pieces.
     LCLetters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
     Numbers = ['1', '2', '3', '4', '5', '6', '7', '8']
+    Pieces = ['R', 'N', 'B', 'Q', 'K']
     
-    # Pawn moves
-    # Pawn advancement.
-    if(len(move) == 2 and move[0] in LCLetters and move[1] in [1,2,3,4,5,6,7]):
-        return True
-    # Pawn promotion.
-    elif(len(move)==4 and move[2]=='=' and move[3] in ['Q','B','R','N']):
-            return True
-    # Pawn Captures
-    elif(len(move) == 4 and move[1]=='x' and move[2] in LCLetters and move[3] in [1,2,3,4,5,6,7]):
-        return True
-    # Pawn Capture and Promotion
-    elif(len(move) == 6 and move[1]=='x' and move[2] in LCLetters and move[3] == 8 and move[4]=='=' and move[5] in ['Q','B','R','N']):
-        return True
+    # New Version
     
     # Castling
     if(move[0] == '0'):
-        if(move == "0-0" or move == "0-0-0" or move == "0-0+" or move == "0-0-0+"):
+        if(move == "0-0" or move == "0-0-0"): # Only valid castling moves.
+            return True;
+        else:
+            return False;
+    elif(move[0] in LCLetters): # Pawn move.
+        if(len(move) == 2 and move[1] in Numbers): # Simple pawn advancement
+            return True
+        elif(len(move) == 3 and (move[1] in LCLetters and move[2] in Numbers)): # Simple pawn capture
+            return True
+        elif(len(move) == 3 and (move[1] in Numbers and move[2] in pieces)): # Pawn advancement and promotion
+            return True
+        elif (len(move) == 4 and (move[1] in LCLetters and move[2] in Numbers and move[3] in Pieces)): # Pawn capture and promotion
             return True
         else:
             return False
-    
-    
-    # King or Queen moves.
-    if(move[0] in ['Q', 'B', 'K']):
-        if(len(move) == 4 and move[1]=='x' and move[2] in LCLetters and move[3] in Numbers):
+    elif(move[0] in Pieces): # Piece moves
+        if(len(move) == 3 and (move[1] in LCLetters and move[2] in Numbers)): # Generic moves
             return True
-        elif(len(move)==3 and move[1] in LCLetters and move[2] in Numbers):
+        elif(len(move) == 4 and move[0] != 'K' and (move[1] in LCLetters or move[1] in Numbers) and move[2] in LCLetters and move[3] in Numbers): # Specifying one piece of information re: originating square
+            return True
+        # Specifying two pieces of information re: originating square.
+        elif(len(move) == 5 and move[0] != 'K' and ((move[1] in LCLetters and move[2] in Numbers) or (move[1] in Numbers and move[2] in LCLetters)) and move[3] in LCLetters and move[4] in Numbers):
             return True
         else:
             return False
-    
-    
-    # Rook, Bishop, or Knight moves separated out due to multiple potential originating locations.
-    if(move[0] in ['R', 'N']):
-        if(len(move) == 4 and move[1]=='x' and move[2] in LCLetters and move[3] in Numbers):
-            return True
-        elif(len(move) == 3 and move[1] in LCLetters and move[2] in Numbers):
-            return True
-        elif(move[1] in LCLetters or move[1] in Numbers):
-            if(len(move) == 5 and move[2]=='x' and move[3] in LCLetters and move[4] in Numbers):
-                return True
-            else:
-                return False
-        else:
-            return False
-    
-    # Generic invalid return.
-    return False
-
-def findoriginatingsquare(move, chessboard, white):
-    # TODO find the originating square of a given move that has been "stripped"
-    # ADD IN OTHER FUNCTION: stripping of moves.
-    
-    # Temporary index tracker for the originating column for pawn captures.
-    tempindex = 0
-    
-    # Track all possible originating locations.
-    possibleoriginatinglocations = []
-    
-    # Special handling of castling.
-    if(move == "0-0" or move == "0-0-0"):
-        return "castling"
-    if(white):
-        # Only one possible king - can skip evaluation of potential multiple pieces.
-        elif(move[0] == 'K'):
-            # Iterating through all the pieces on the board.
-            for i in range(len(chessboard)):
-                for j in range (len(chessboard[i]):
-                    # If the king is found on the chessboard, then return the corresponding square.
-                    if('WK' == chessboard[i][j]):
-                        return squaremapping[i][j]
-        # Normal evaluation for major pieces which there could be multiple of.
-        elif(move[0] in ['Q','R','B','N']):
-            # Iterating through all the pieces on the board.
-            for i in range(len(chessboard)):
-                for j in range (len(chessboard[i]):
-                    # If the piece is found on the chessboard
-                    if(move[0] == (chessboard[i][j])[1] and (chessboard[i][j])[0] == 'W'):
-                        # Add its square to the possible originating locations.
-                        possibleoriginatinglocations.append(squaremapping[i][j])
-            # If there's only one possible originating location then return that.
-            if(len(possibleoriginatinglocations) = 1):
-                return possibleoriginatinglocations[0]
-            # Otherwise iterate through the possible originating locations with different logic for different move formatting / length.
-            else:
-                # Iterating through the possible originating locations for moves that are specified with a row OR column.
-                if(move.len == 4):
-                    for i in range(len(possibleoriginatinglocations)):
-                        if(move[1] == (possibleoriginatinglocations[i])[0] or move[1] == (possibleoriginatinglocations[i])[1]):
-                            return possibleoriginatinglocations[i]
-                # Iterating through the possible originating locations for moves that are specified with a row AND column.
-                elif(move.len == 5):
-                    if(move[1:2] == possibleoriginatinglocations[i]):
-                        return possibleoriginatinglocations[i]
-                else:
-                    return "insufficient specification"
-        # Pawn moves
-        else:
-            # Simple advancement.
-            if(len(move) == 2):
-            # Capture 
-            else:
-                # White pawns advance one row while capturing, and the originating column must be indicated by definition.
-                return (move[0] + str(int(move[2]--)))     
-    # Black pieces.            
-    else:
-    # Only one possible king - can skip evaluation of potential multiple pieces.
-        elif(move[0] == 'K'):
-            # Iterating through all the pieces on the board.
-            for i in range(len(chessboard)):
-                for j in range (len(chessboard[i]):
-                    # If the king is found on the chessboard, then return the corresponding square.
-                    if('BK' == chessboard[i][j]):
-                        return squaremapping[i][j]
-        # Normal evaluation for major pieces which there could be multiple of.
-        elif(move[0] in ['Q','R','B','N']):
-            # Iterating through all the pieces on the board.
-            for i in range(len(chessboard)):
-                for j in range (len(chessboard[i]):
-                    # If the piece is found on the chessboard
-                    if(move[0] == (chessboard[i][j])[1] and (chessboard[i][j])[0] == 'B'):
-                        # Add its square to the possible originating locations.
-                        possibleoriginatinglocations.append(squaremapping[i][j])
-            # If there's only one possible originating location then return that.
-            if(len(possibleoriginatinglocations) = 1):
-                return possibleoriginatinglocations[0]
-            # Otherwise iterate through the possible originating locations with different logic for different move formatting / length.
-            else:
-                # Iterating through the possible originating locations for moves that are specified with a row OR column.
-                if(move.len == 4):
-                    for i in range(len(possibleoriginatinglocations)):
-                        if(move[1] == (possibleoriginatinglocations[i])[0] or move[1] == (possibleoriginatinglocations[i])[1]):
-                            return possibleoriginatinglocations[i]
-                # Iterating through the possible originating locations for moves that are specified with a row AND column.
-                elif(move.len == 5):
-                    if(move[1:2] == possibleoriginatinglocations[i]):
-                        return possibleoriginatinglocations[i]
-                else:
-                    return "insufficient specification"
-        # Pawn moves
-        else:
-            # Simple advancement.
-            if(len(move) == 2):
-            # Capture 
-            else:
-                # Black pawns regress (in terms of linear progression) one row while capturing, and the originating column must be indicated by definition.
-                return (move[0] + str(int(move[2]++)))
-    return "error"
-
-def kingmove(move, chessboard):
-    print("king move")
-    return
-    
-def queenmove(move, chessboard):
-    # TODO check if a given queen move is legal.
-    # All legal queen moves would be legal for either a bishop or a rook, so evaluation is just passed on to those functions.
-    if(rookmove(move, chessboard) or bishopmove(move, chessboard):
-        return True
-    else:
-        return False
-        
-def rookmove(move, chessboard):
-    
-    print("rook move")
-    return
-    
-def bishopmove(move, chessboard):
-    print("bishop move")
-    return
-
-def knightmove(move, chessboard):
-    print("knight move")
-    return
-
-def pawnmove(move, chessboard):
-    print("pawn move")
-    return
-
-def evaluatecheck(chessboard, white):
-    # TODO evaluate if the king of a given color is in check in a given position. True is white and false is black.
-    # Returns True if the King is in check and Fasle if the King is not in check.
-    
-    # Stores the square that the king in question is located on.
-    kingsquare = ""
-    `
-   # Symmetric construction for black king so not commenting that part.
-   # Finding the square that the king is on. 
-   if(white):
-       for i in range(len(chessboard)):
-           for j in range(len(chessboard[i])):
-               if(piece == "WK"):
-                  # Saving the square that the king is on so that the potential legality of moving another piece to that square can be evaluated.
-                  kingsqure = squaremapping[i][j]
-       # Iterating through all potential locations for enemy pieces.
-       for i in range(len(chessboard)):
-           for j in range(len(chessboard[i])):
-               # If an enemy piece is found, the legality of "capturing" the king is evaluated via the functions for checking the legality of any individual move.
-               if(piece == "BK"):
-                   if(kingmove("K" + kingsqure, chessboard)):
-                       return True
-               elif(piece == "BQ"):
-                   if(queenmove("Q" + kingsquare, chessboard):
-                       return True
-               elif(piece == "BR"):
-                   if(rookmove("R" + kingsquare, chessboard):
-                       return True
-               elif(piece == "BN"):
-                   if(knightmove("N" + kingsquare, chessboard):
-                       return True
-               elif(piece == "BB"):
-                   if(bishopmove("B" + kingsquare, chessboard):
-                       return True
-               elif(piece == "BP"):
-                   if(pawnmove((squaremapping[i][j])[0] + kingsquare, chessboard):
-                       return True
-               else:
-                   return False
-   else:
-       for i in range(len(chessboard)):
-           for j in range(len(chessboard[i])):
-               if(piece == "BK"):
-                  kingsqure = squaremapping[i][j]
-      for i in range(len(chessboard)):
-           for j in range(len(chessboard[i])):
-               if(piece == "WK"):
-                   if(kingmove("K" + kingsqure, chessboard)):
-                       return True
-               elif(piece == "WQ"):
-                   if(queenmove("Q" + kingsquare, chessboard):
-                       return True
-               elif(piece == "WR"):
-                   if(rookmove("R" + kingsquare, chessboard):
-                       return True
-               elif(piece == "WN"):
-                   if(knightmove("N" + kingsquare, chessboard):
-                       return True
-               elif(piece == "WB"):
-                   if(bishopmove("B" + kingsquare, chessboard):
-                       return True
-               elif(piece == "WP"):
-                   if(pawnmove((squaremapping[i][j])[0] + kingsquare, chessboard):
-                       return True
-               else:
-                   return False
+    else: # Generic false return in the event that the move can't be validated.
+        return False;
 
 def checkmovelegal(move, chessboard, white):
     # TODO check if a move is legal in a given position. Moves must have already been validated through checkmovevalid as there is no internal error-handling.
@@ -337,6 +141,141 @@ def checkmovelegal(move, chessboard, white):
    else:
         return False
 
+def findoriginatingsquare(move, chessboard, white):
+    # TODO find the originating square of a given move that has been "stripped." 
+    # The originating square is returned as a two-digit integer where the first digit represents the row coordinate
+    # and the second digit represents the column coordinate.
+    # BORKED: Finish transition to algebraic return.
+    
+    # Temporary index tracker for the originating column for pawn captures.
+    tempindex = 0
+    
+    # Track all possible originating locations.
+    possibleoriginatinglocations = []
+    
+    # Special handling of castling.
+    if(move == "0-0" or move == "0-0-0"):
+        return "castling"
+    return "error"
+
+def findfinalsquare(move):
+    # TODO find the ending square of a given move that has already been stripped by stripmove().
+    # Special handling of castling.
+    if(move[0] == "0"):
+        return "castling"
+    # All other moves.
+    else:
+        for i in range(len(move)):
+            # Returning the beginning of any sequence containing pawn promotion.
+            if(move[i] == "="):
+                return move[0:1]
+        # Generally grabbing the last two characters of any other sequence.
+        return move[len(move)-2:len(move)-1]          
+                
+def kingmove(move, chessboard):
+    # TODO evaluate whether a given king move is legal.
+    
+    originatingsquare = findoriginatingsquare(move)
+    finalsquare = findfinalsquare(move)
+    
+    
+    
+    
+    return
+    
+def queenmove(move, chessboard):
+    # TODO check if a given queen move is legal.
+    # All legal queen moves would be legal for either a bishop or a rook, so evaluation is just passed on to those functions.
+    if(rookmove(move, chessboard) or bishopmove(move, chessboard)):
+        return True
+    else:
+        return False
+        
+def rookmove(move, chessboard):
+    
+    print("rook move")
+    return
+    
+def bishopmove(move, chessboard):
+    print("bishop move")
+    return
+
+def knightmove(move, chessboard):
+    print("knight move")
+    return
+
+def pawnmove(move, chessboard):
+    print("pawn move")
+    return
+
+def evaluatecheck(chessboard, white):
+    # TODO evaluate if the king of a given color is in check in a given position. True is white and false is black.
+    # Returns True if the King is in check and Fasle if the King is not in check.
+    
+    # Stores the square that the king in question is located on.
+    kingsquare = ""
+   # Symmetric construction for black king so not commenting that part.
+   # Finding the square that the king is on. 
+    if(white):
+       for i in range(len(chessboard)):
+           for j in range(len(chessboard[i])):
+               if(piece == "WK"):
+                  # Saving the square that the king is on so that the potential legality of moving another piece to that square can be evaluated.
+                  kingsqure = squaremapping[i][j]
+       # Iterating through all potential locations for enemy pieces.
+       for i in range(len(chessboard)):
+           for j in range(len(chessboard[i])):
+               # If an enemy piece is found, the legality of "capturing" the king is evaluated via the functions for checking the legality of any individual move.
+               if(piece == "BK"):
+                   if(kingmove("K" + kingsqure, chessboard)):
+                       return True
+               elif(piece == "BQ"):
+                   if(queenmove("Q" + kingsquare, chessboard)):
+                       return True
+               elif(piece == "BR"):
+                   if(rookmove("R" + kingsquare, chessboard)):
+                       return True
+               elif(piece == "BN"):
+                   if(knightmove("N" + kingsquare, chessboard)):
+                       return True
+               elif(piece == "BB"):
+                   if(bishopmove("B" + kingsquare, chessboard)):
+                       return True
+               elif(piece == "BP"):
+                   if(pawnmove((squaremapping[i][j])[0] + kingsquare, chessboard)):
+                       return True
+               else:
+                   return False
+    else:
+       for i in range(len(chessboard)):
+           for j in range(len(chessboard[i])):
+               if(piece == "BK"):
+                  kingsqure = squaremapping[i][j]
+       for i in range(len(chessboard)):
+            for j in range(len(chessboard[i])):
+               if(piece == "WK"):
+                   if(kingmove("K" + kingsqure, chessboard)):
+                       return True
+               elif(piece == "WQ"):
+                   if(queenmove("Q" + kingsquare, chessboard)):
+                       return True
+               elif(piece == "WR"):
+                   if(rookmove("R" + kingsquare, chessboard)):
+                       return True
+               elif(piece == "WN"):
+                   if(knightmove("N" + kingsquare, chessboard)):
+                       return True
+               elif(piece == "WB"):
+                   if(bishopmove("B" + kingsquare, chessboard)):
+                       return True
+               elif(piece == "WP"):
+                   if(pawnmove((squaremapping[i][j])[0] + kingsquare, chessboard)):
+                       return True
+               else:
+                   return False
+
+
+
    
        
 def executemove(move, chessboard):
@@ -349,7 +288,6 @@ def executemove(move, chessboard):
     
 def renderboard (chessboard):
     # TODO: Create a png of a chessboard from an array in the format defined below.
-    # Borked because of switch to 2D array.
     from PIL import Image
     
     # Importing / Creating Images
@@ -407,14 +345,10 @@ def renderboard (chessboard):
         return
 
 
-# Taking move inputs.
-
-# Random test code.
-checkmovelegal("Na5", chessboard, True)
-
 while(game):
     while(impossiblemove):
         move = input("Enter a move: ")
+        move = stripmove(move)
         if(checkmovevalid(move)):
             print('valid')
         else:
