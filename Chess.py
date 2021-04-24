@@ -1,3 +1,5 @@
+# TODO: Unit testing of findoriginatingsquare and findfinalsquare
+
 # Used for rendering the board from a collection of PNGs. 
 import PIL
 
@@ -8,7 +10,7 @@ squaremapping = [
 ["a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6"] ,
 ["a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5"] ,
 ["a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4"] ,
-["a3", "b3", "c3", "d3", "e3", "f3", "g3," "h3"] ,
+["a3", "b3", "c3", "d3", "e3", "f3", "g3,", "h3"] ,
 ["a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2"] ,
 ["a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1"]]
 
@@ -38,10 +40,6 @@ inCheck = [False, False]
 game = True
 # Tracks whether the entered move is impossible.
 impossiblemove = True
-
-# Used in individual evalution functions to track a move's originating and final squares.
-originatingsquare = ""
-finalsqure = ""
 
 
 
@@ -153,7 +151,7 @@ def findoriginatingsquare(move, chessboard):
     
     
     # Unfinished. In process of conversion to integer return.
-    # Probably very buggy. Unit testing is very much needed.
+    # FIXME: TEST CASTLING AND PIECE MOVES
     
     originatingPiece = 'W' # The needed information about the originating piece (piece and color)
     if(move[0] == 'Z'): # If the originating piece is black
@@ -178,7 +176,7 @@ def findoriginatingsquare(move, chessboard):
                 # If the king is found on the chessboard, then return the corresponding square.
                 if(originatingPiece == chessboard[i][j]):
                     return ((10 * (i + 1) + (j+1)))
-    # Normal evaluation for major pieces which there could be multiple of.
+    # Normal evaluation for major pieces which there could be multiple of. - Untested
     elif(originatingPiece[1] in ['Q','R','B','N']):
         # Iterating through all the pieces on the board.
         for i in range(8):
@@ -204,7 +202,7 @@ def findoriginatingsquare(move, chessboard):
                         return possibleoriginatinglocations[i]
             else:
                 return "insufficient specification"
-    # Pawn moves
+    # Pawn moves - tested
     else:
         # Simple advancement.
         if(len(move) == 3):
@@ -217,32 +215,45 @@ def findoriginatingsquare(move, chessboard):
                             return ((10 * (i) + (j+1)))
         # Capture 
         else:
-            # White pawns advance one row while capturing, and the originating column must be indicated by definition.
+            # Different cases as white pawns advance while capturing while black pawns essentially "regress" one row from an index perspective.
             if(move[0] == 'W'):
-                print("beep")
                 for i in range(8):
                     for j in range(8):
-                        if(squaremapping[i][j] == (move[1] + chr(int(move[3]) - 1))): # Borked
-                            return ((10 * (i + 1) + (j))) # Incrementing probably borked.
+                        if(squaremapping[i][j] == (move[1] + str(int(move[3]) - 1))):
+                            return ((10 * (i + 1) + (j+1)))
             else:
                 for i in range(8):
                     for j in range(8):
-                        if(squaremapping[i][j] == (move[1] + chr(int(move[3]) - 1))):
-                            return ((10 * (i + 1) + (j+1))) # Incrementing probably borked.
+                        if(squaremapping[i][j] == (move[1] + str(int(move[3]) - 1))):
+                            return ((10 * (i - 1) + (j+1)))
 
-def findfinalsquare(move):
+def findfinalsquare(move):   
     # TODO find the ending square of a given move that has already been stripped by stripmove().
-    # Special handling of castling.
-    if(move[0] == "0"):
-        return "castling"
+     
+    textFinalSquare = ""
+    
+    move = move[1:] # Stripping color indicator as it is irrelevant.   
+
+    if(move[0] == "0"): # Special handling of castling.
+        return 99
     # All other moves.
     else:
         for i in range(len(move)):
-            # Returning the beginning of any sequence containing pawn promotion.
+            # Dealing with special case of extra information at the end of pawn promotion.
             if(move[i] == "="):
-                return move[0:1]
+                if(len(move) == 4):
+                    textFinalSquare = move[0:2]
+                    break
+                else:
+                    textFinalSquare = move[1:3]
+                    break
         # Generally grabbing the last two characters of any other sequence.
-        return move[len(move)-2:len(move)-1]          
+        if(textFinalSquare == ""):
+            textFinalSquare = move[-2:]
+        for i in range(8):
+            for j in range(8):
+                if(squaremapping[i][j] == textFinalSquare):
+                    return ((10 * (i + 1) + (j+1)))
                 
 def kingmove(move, chessboard):
     # TODO evaluate whether a given king move is legal.
@@ -416,7 +427,7 @@ def renderboard (chessboard):
 while(game):
     while(impossiblemove):
         move = input("Enter a move: ")
-        temp = (findoriginatingsquare(move, chessboard))
+        temp = (findfinalsquare(move))
         print(squaremapping[int(temp / 10) - 1][(temp % 10) - 1])
 
     
